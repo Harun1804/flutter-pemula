@@ -5,9 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../cubit/post_cubit.dart';
+import '../model/post.dart';
 
 class AddEditPostScreen extends StatefulWidget {
-  const AddEditPostScreen({super.key});
+  final Post? post;
+  const AddEditPostScreen({super.key, this.post});
 
   @override
   State<AddEditPostScreen> createState() => _AddEditPostScreenState();
@@ -52,6 +54,13 @@ class _AddEditPostScreenState extends State<AddEditPostScreen> {
   @override
   void initState() {
     postCubit = PostCubit();
+    if (widget.post != null) {
+      _titleController.text = widget.post?.title ?? "";
+      _authorController.text = widget.post?.author ?? "";
+      _yearController.text = widget.post?.year.toString() ?? "";
+      _publisherController.text = widget.post?.publisher ?? "";
+    }
+
     super.initState();
   }
 
@@ -71,7 +80,16 @@ class _AddEditPostScreenState extends State<AddEditPostScreen> {
   Future<void> _submitData() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_cover != null) {
+    if (widget.post != null) {
+      postCubit.updatePost(
+        id: widget.post?.id ?? 0,
+        title: _titleController.text,
+        author: _authorController.text,
+        year: int.parse(_yearController.text),
+        publisher: _publisherController.text,
+        cover: _cover,
+      );
+    } else if (_cover != null) {
       postCubit.createPost(
         title: _titleController.text,
         author: _authorController.text,
@@ -94,13 +112,23 @@ class _AddEditPostScreenState extends State<AddEditPostScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Add New Post',
+          widget.post == null ? 'Add New Post' : 'Edit Post',
         ),
       ),
       body: BlocListener<PostCubit, PostState>(
         bloc: postCubit,
         listener: (context, state) {
           if (state is PostCreated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pop(context, true);
+          }
+
+          if (state is PostUpdated) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -224,7 +252,7 @@ class _AddEditPostScreenState extends State<AddEditPostScreen> {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _submitData,
-                      child: Text('Submit'),
+                      child: Text(widget.post == null ? 'Submit' : 'Update'),
                     ),
                   ),
                 ],

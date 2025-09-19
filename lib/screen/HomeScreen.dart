@@ -138,7 +138,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   Column(
                     children: [
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () async {
+                          var result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddEditPostScreen(post: post),
+                            ),
+                          );
+
+                          if (result == true) {
+                            loadPost();
+                          }
+                        },
                         icon: const Icon(Icons.edit, color: Colors.blue),
                       ),
                       IconButton(
